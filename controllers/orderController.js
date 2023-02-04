@@ -5,7 +5,8 @@ const Product = require("../models/productModel")
 const nodemailer = require("nodemailer")
 const { PDFDocument, StandardFonts } = require("pdf-lib");
 const path = require("path")
-const { writeFileSync } = require("fs");
+const { writeFileSync, existsSync, mkdirSync } = require("fs");
+// const { fs } = require("fs");
 
 //Helper function for getting a valid message from mongoose
 const mongooseErrorHandler = (error) => {
@@ -33,9 +34,8 @@ const createOrder = async (req, res, next) => {
             user: req.userId,
             taxes: cart.taxes,
             nettoPrice: cart.nettoPrice
-            
         })
-        
+
         await order.save()
         cart.items = []
         cart.totalPrice = 0
@@ -43,9 +43,13 @@ const createOrder = async (req, res, next) => {
         cart.taxes = 0
         await cart.save()
 
-        // funtion to reduce the quatity in the data base comes here
+        order.items.forEach(async (item) => {
+          const product = await Product.findById(item.product)
+          product.quantity -= item.quantity
+          await product.save()
+        })
 
-        // Create a new PDFDocument
+        // Create a new PDFDoc ument
         const pdfDoc = await PDFDocument.create()
 
         // Embed the Times Roman font
@@ -76,7 +80,7 @@ const createOrder = async (req, res, next) => {
         })
 
         const totalQuantity = order.items.reduce((sum, item) => {
-          return sum + item.quantity
+          return (sum + item.quantity)
         }, 0)
 
         page.drawText(`total quantity: ${totalQuantity}`, {
@@ -109,8 +113,8 @@ const createOrder = async (req, res, next) => {
           // color: rgb(0, 0.53, 0.71),
         })
 
+        
         const newOrder = await Order.findById(order._id).populate("items.product")
-
         newOrder.items.forEach((item, index) => {
           page.drawText(`product name: ${item.product.name} quantity: ${item.quantity}`, {
             x: 50,
@@ -121,8 +125,13 @@ const createOrder = async (req, res, next) => {
           })
         })
 
-        writeFileSync(`pdfs/${user.firstName}_${user.lastName}_${order._id}.pdf`, await pdfDoc.save());
+        // create folder if not exists
+        const createDirIfNotExists = dir =>
+        !existsSync(dir) ? mkdirSync(dir) : undefined
+        createDirIfNotExists(`${user.firstName}_orders`)
 
+        writeFileSync(`${user.firstName}_orders/${user.firstName}_${user.lastName}_${order._id}.pdf`, await pdfDoc.save())
+       
         const transport = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -138,19 +147,17 @@ const createOrder = async (req, res, next) => {
             `,
             attachments: [{
                 filename: "invoice.pdf",
-                path: path.join(__dirname,`../pdfs/${user.firstName}_${user.lastName}_${order._id}.pdf`)
+                path: path.join(__dirname,`../${user.firstName}_orders/${user.firstName}_${user.lastName}_${order._id}.pdf`)
             }]
           })
-
         res.json(order)
-
     }
 
     catch (err) {
-        console.log(err)
-        res.status(422).json({
-            message: mongooseErrorHandler(err)
-          })
+      console.log(err)
+      res.status(422).json({
+        message: mongooseErrorHandler(err)
+      })
     }
 }
 

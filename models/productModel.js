@@ -51,7 +51,7 @@ const productSchema = new Schema({
     required: [true, "Please provide the quantity!"],
     validate: {
       validator: (value) => {
-        if (value < 1) return false;
+        if (value < 0) return false;
         else return true;
       },
       message: "Quantity should be greater than 0",

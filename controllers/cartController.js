@@ -34,7 +34,6 @@ const addItem = async (req, res, next) => {
             
         }
 
-        
         cart.totalPrice += product.price
         cart.totalPrice = cart.totalPrice.toFixed(2)
         cart.nettoPrice = cart.totalPrice / 119 * 100

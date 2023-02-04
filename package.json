@@ -1,7 +1,6 @@
 {
   "name": "ecommerce-backend",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js"
@@ -25,5 +24,13 @@
   "devDependencies": {
     "nodemon": "^2.0.20"
   },
-  "repository": ""
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarek339/onlineshop-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tarek339/onlineshop-backend/issues"
+  },
+  "homepage": "https://github.com/tarek339/onlineshop-backend#readme",
+  "description": ""
 }
